@@ -52,12 +52,12 @@ Game.addSceneTemplate({
       entity: function() {
         var sprite = new PIXI.Sprite(PIXI.loader.resources.player.texture);
         sprite.position.y = 100;
-        sprite.position.x = 50;
+        sprite.position.x = Game.renderer.width/3*2;
         sprite.scale.x = 0.2;
         sprite.scale.y = 0.2;
         var player = new Systemize.Entity([
           {type: "SpriteComponent", component: {sprite: sprite}},
-          {type: "PhysicsComponent", component: {velocity: {x: 0, y: 0}, acceleration: {x: 0, y: 0.2}, friction: 0.5}},
+          {type: "PhysicsComponent", component: {velocity: {x: 0, y: 0}, acceleration: {x: 0, y: 0.2}, friction: 0.95}},
           {type: "CollisionComponent", component: {group: "player", solid: true}},
           {type: "MovementComponent", component: {speed: 3}},
         ]);
@@ -72,6 +72,7 @@ Game.addSceneTemplate({
 //PhysicsSystem
 Game.addSystem({
   update: function(delta) {
+    delta /= 16;
     var entities = Game.entityManager.getEntitiesByComponents(["SpriteComponent", "PhysicsComponent"]);
     entities.forEach(function(entity) {
       var sprite = entity.components.SpriteComponent.sprite;
@@ -85,8 +86,8 @@ Game.addSystem({
       //account for friction
       physics.velocity.x *= physics.friction;
       //move the sprite
-      sprite.position.x += physics.velocity.x;
-      sprite.position.y += physics.velocity.y;
+      sprite.position.x += physics.velocity.x * delta;
+      sprite.position.y += physics.velocity.y * delta;
     });
   }
 });
@@ -132,6 +133,7 @@ Game.addSystem({
     space: 32
   },
   update: function(delta) {
+    delta /= 16;
     var entities = Game.entityManager.getEntitiesByComponents(["SpriteComponent", "MovementComponent", "PhysicsComponent"]);
     var self = this;
     entities.forEach(function(entity) {
@@ -139,11 +141,21 @@ Game.addSystem({
       var physics = entity.components.PhysicsComponent;
       var sprite = entity.components.SpriteComponent.sprite;
       var collidable = Game.entityManager.getEntitiesByComponents(["CollisionComponent", "SpriteComponent"]);
+      var paralax = function(scene, normal, direction, factor) {
+        var paralax = factor || 0.6;
+        entity.scene.layers.forEach(function(scene, index) {
+          entity.scene.layers[index].position.x -= direction * (movement.speed * delta * normal + (index - normal)*paralax);
+        });
+      };
       if(Systemize.InputManager.isKeyDown(self.keys.right)) {
-        physics.velocity.x += movement.speed;
+        //physics.velocity.x += movement.speed;
+        sprite.position.x += movement.speed * delta;
+        paralax(entity.scene, 1, 1);
       }
       if(Systemize.InputManager.isKeyDown(self.keys.left)) {
-        physics.velocity.x -= movement.speed;
+        //physics.velocity.x -= movement.speed;
+        sprite.position.x -= movement.speed * delta;
+        paralax(entity.scene, 1, -1);
       }
       if(Systemize.InputManager.isKeyDown(self.keys.space)) {
         collidable.forEach(function(other) {
@@ -151,15 +163,15 @@ Game.addSystem({
           var otherSprite = other.components.SpriteComponent.sprite;
           if(otherCollision.solid) {
             var left = Bump.hitTestPoint({
-              x: sprite.position.x,
+              x: sprite.position.x + 6,
               y: sprite.position.y + sprite.height + 2
             }, otherSprite);
             var right = Bump.hitTestPoint({
-              x: sprite.position.x + sprite.width,
+              x: sprite.position.x + sprite.width - 6,
               y: sprite.position.y + sprite.height + 2
             }, otherSprite);
             if(right || left) {
-              physics.velocity.y = -10;
+              physics.velocity.y = -6;
             }
           }
         });
