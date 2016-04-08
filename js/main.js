@@ -16,7 +16,7 @@ Game.addSceneTemplate({
     {
       layer: 0,
       entity: function() {
-        var sprite = new PIXI.Sprite(PIXI.loader.resources.background.texture);
+        var sprite = new PIXI.extras.TilingSprite(PIXI.loader.resources.background.texture, Game.renderer.width * 6, Game.renderer.height);
         var background = new Systemize.Entity([
           {type: "SpriteComponent", component: {sprite: sprite}}
         ]);
@@ -163,11 +163,11 @@ Game.addSystem({
           var otherSprite = other.components.SpriteComponent.sprite;
           if(otherCollision.solid) {
             var left = Bump.hitTestPoint({
-              x: sprite.position.x + 6,
+              x: sprite.position.x + 10,
               y: sprite.position.y + sprite.height + 2
             }, otherSprite);
             var right = Bump.hitTestPoint({
-              x: sprite.position.x + sprite.width - 6,
+              x: sprite.position.x + sprite.width - 10,
               y: sprite.position.y + sprite.height + 2
             }, otherSprite);
             if(right || left) {
