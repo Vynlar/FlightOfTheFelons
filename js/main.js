@@ -1,22 +1,28 @@
-var Game = new Systemize.Game(800, 600);
+var Game = new Systemize.Game(1280, 720);
 
 Bump = new Bump(PIXI);
 
 Game.addAssets([
   ["player", "assets/player.png"],
-  ["bricks", "assets/bricks.png"],
+  ["bricks", "assets/buildings/textures/dark_brick.png"],
   ["concrete", "assets/concrete.png"],
-  ["background", "assets/background.jpg"]
+  ["background0", "assets/background/sky.png"],
+  ["background1", "assets/background/mountain0.png"],
+  ["background2", "assets/background/mountain1.png"],
+  ["background3", "assets/background/mountain2.png"],
+  ["dirt", "assets/buildings/textures/dirt.png"],
+  ["speedup", "assets/powerups/cola.png"]
 ]);
 
+/*
 Game.addSceneTemplate({
   id: "GameScene",
-  layerCount: 3,
+  layerCount: 6,
   entities: [
     {
       layer: 0,
       entity: function() {
-        var sprite = new PIXI.extras.TilingSprite(PIXI.loader.resources.background.texture, Game.renderer.width * 6, Game.renderer.height);
+        var sprite = new PIXI.extras.TilingSprite(PIXI.loader.resources.background0.texture, Game.renderer.width * 10, Game.renderer.height);
         var background = new Systemize.Entity([
           {type: "SpriteComponent", component: {sprite: sprite}}
         ]);
@@ -26,39 +32,88 @@ Game.addSceneTemplate({
     {
       layer: 1,
       entity: function() {
+        var sprite = new PIXI.extras.TilingSprite(PIXI.loader.resources.background1.texture, Game.renderer.width * 10, Game.renderer.height);
+        var background = new Systemize.Entity([
+          {type: "SpriteComponent", component: {sprite: sprite}}
+        ]);
+        return background;
+      }
+    },
+    {
+      layer: 2,
+      entity: function() {
+        var sprite = new PIXI.extras.TilingSprite(PIXI.loader.resources.background2.texture, Game.renderer.width * 10, Game.renderer.height);
+        var background = new Systemize.Entity([
+          {type: "SpriteComponent", component: {sprite: sprite}}
+        ]);
+        return background;
+      }
+    },
+    {
+      layer: 3,
+      entity: function() {
+        var sprite = new PIXI.extras.TilingSprite(PIXI.loader.resources.background3.texture, Game.renderer.width * 10, Game.renderer.height);
+        var background = new Systemize.Entity([
+          {type: "SpriteComponent", component: {sprite: sprite}}
+        ]);
+        return background;
+      }
+    },
+    {
+      layer: 4,
+      entity: function() {
         var buildings = [];
         var currentX = 0;
-        for(var i = 0; i < 20; i++) {
+        var currentY = 200;
+        for(var i = 0; i < 50; i++) {
           var width = Math.floor(Math.random() * 200 + 100);
-          var height = Math.floor(Math.random() * 200 + 100);
+          var dHeight = Math.floor(Math.random() * 200 - 100);
+          var height = currentY + dHeight;
+          if(height <= 100 || height >= Game.renderer.height - 250) {
+            height -= dHeight * 2;
+          }
+          currentY = height;
+
           var texture;
           if(Math.random() < 0.5) texture = PIXI.loader.resources.bricks.texture;
           else texture = PIXI.loader.resources.concrete.texture;
+          var spriteContainer = new PIXI.Container();
           var sprite = new PIXI.extras.TilingSprite(texture, width, height);
           sprite.position.x = currentX;
           sprite.position.y = Game.renderer.height - height;
+          spriteContainer.addChild(sprite);
+
+          //generate dirt
+          var dirt = new PIXI.extras.TilingSprite(PIXI.loader.resources.dirt.texture, 400, width);
+          dirt.position.x = currentX;
+          dirt.position.y = Game.renderer.height;
+          spriteContainer.addChild(dirt);
+
           var building = new Systemize.Entity([
-            {type: "SpriteComponent", component: {sprite: sprite}},
+            {type: "SpriteComponent", component: {sprite: spriteContainer}},
             {type: "CollisionComponent", component: {group: "solid", solid: true, static: true}},
             {type: "PhysicsComponent", component: {velocity: {x: 0, y: 0}, acceleration: {x: 0, y: 0}, friction: 0.95, solid: true, static: true}}
           ]);
           buildings.push(building);
           currentX += width;
+          currentX += Math.floor(Math.random() * 30);
+
+
         }
         return buildings;
       }
     },
     {
-      layer: 1,
+      layer: 4,
       entity: function() {
         var sprite = new PIXI.Sprite(PIXI.loader.resources.player.texture);
         sprite.position.y = 100;
-        sprite.position.x = Game.renderer.width/3*2;
+        sprite.position.x = Game.renderer.width/3;
         sprite.scale.x = 0.2;
         sprite.scale.y = 0.2;
         var player = new Systemize.Entity([
           {type: "SpriteComponent", component: {sprite: sprite}},
-          {type: "PhysicsComponent", component: {velocity: {x: 0, y: 0}, acceleration: {x: 0, y: 0.2}, friction: 0.95, solid: true, static: false}},
+          {type: "PhysicsComponent", component: {velocity: {x: 0, y: 0}, acceleration: {x: 0, y: 0.35}, friction: 0.95, solid: true, static: false}},
           {type: "CollisionComponent", component: {group: "player", solid: true}},
           {type: "MovementComponent", component: {speed: 0.3}},
           {type: "FollowComponent", component: {distance: 0}}
@@ -66,10 +121,12 @@ Game.addSceneTemplate({
 
         return player;
       }
-    },
-
+    }
   ]
 });
+*/
+
+Game.addScene("GameScene", GameScene);
 
 //PhysicsSystem
 Game.addSystem({
@@ -84,7 +141,7 @@ Game.addSystem({
       physics.velocity.x += physics.acceleration.x;
       physics.velocity.y += physics.acceleration.y;
       //clamp velocity
-      physics.velocity.x = Math.min(physics.velocity.x, 5);
+      //physics.velocity.x = Math.min(physics.velocity.x, 5);
       physics.velocity.y = Math.min(physics.velocity.y, 15);
       //account for friction
       physics.velocity.x *= physics.friction;
@@ -106,10 +163,25 @@ Game.addSystem({
         }
         if(entity.components.FollowComponent) {
           if(side == "left" || side == "right") {
+            physics.velocity.x = 0;
             entity.components.FollowComponent.distance = 0;
           }
         }
       });
+    });
+  }
+});
+
+//powerup system
+Game.addSystem({
+  update: function(delta) {
+    delta /= 16;
+    var entities = Game.entityManager.getEntitiesByComponents(["PowerupComponent", "SpriteComponent"]);
+    entities.forEach(function(entity) {
+      if(Bump.hit(entity.components.SpriteComponent.sprite, Game.player.components.SpriteComponent.sprite)) {
+        Game.player.components.MovementComponent.speed += 0.1;
+        entity.scene.removeEntity(entity, 4);
+      }
     });
   }
 });
@@ -121,16 +193,12 @@ Game.addSystem({
     var entities = Game.entityManager.getEntitiesByComponents(["FollowComponent", "SpriteComponent"]);
     entities.forEach(function(entity) {
       var sprite = entity.components.SpriteComponent.sprite;
-      var paralax = function(normal, direction, distance, factor) {
-        var paralax = factor || 0.6;
-        entity.scene.layers.forEach(function(scene, index) {
-          entity.scene.layers[index].position.x -= direction * (distance * delta /* normal*/ + (index - normal)*paralax);
-        });
-      };
-      console.log(entity.components.FollowComponent.distance);
-      //paralax(0.5, 1, entity.components.FollowComponent.distance);
-      entity.scene.root.position.x += -entity.components.FollowComponent.distance;
-      if(entity.components.FollowComponent.distance > 0.01) console.log("0");
+      var paralax = 0.25;
+      var normal = 4;
+      var distance = entity.components.FollowComponent.distance;
+      entity.scene.layers.forEach(function(scene, index) {
+        entity.scene.layers[index].position.x -= (index) * paralax * distance;
+      });
     });
   }
 });
@@ -178,27 +246,16 @@ Game.addSystem({
       var physics = entity.components.PhysicsComponent;
       var sprite = entity.components.SpriteComponent.sprite;
       var collidable = Game.entityManager.getEntitiesByComponents(["CollisionComponent", "SpriteComponent"]);
-      var paralax = function(scene, normal, direction, factor) {
-        var paralax = factor || 0.6;
-        entity.scene.layers.forEach(function(scene, index) {
-          entity.scene.layers[index].position.x -= direction * (movement.speed * delta * normal + (index - normal)*paralax);
-        });
-      };
       var stop = true;
       if(Systemize.InputManager.isKeyDown(self.keys.right)) {
         physics.acceleration.x = movement.speed;
         stop = false;
-        //sprite.position.x += movement.speed * delta;
-        //paralax(entity.scene, 1, 1);
       }
       if(Systemize.InputManager.isKeyDown(self.keys.left)) {
         physics.acceleration.x = -movement.speed;
         stop = false;
-        //sprite.position.x -= movement.speed * delta;
-        //paralax(entity.scene, 1, -1);
       }
       if(stop) physics.acceleration.x = 0;
-      /*
       if(Systemize.InputManager.isKeyDown(self.keys.space)) {
         collidable.forEach(function(other) {
           var otherCollision = other.components.CollisionComponent;
@@ -213,12 +270,11 @@ Game.addSystem({
               y: sprite.position.y + sprite.height + 2
             }, otherSprite);
             if(right || left) {
-              physics.velocity.y = -6;
+              physics.velocity.y = -10;
             }
           }
         });
       }
-      */
     });
   }
 });
