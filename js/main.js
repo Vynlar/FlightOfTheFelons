@@ -178,9 +178,14 @@ Game.addSystem({
     delta /= 16;
     var entities = Game.entityManager.getEntitiesByComponents(["PowerupComponent", "SpriteComponent"]);
     entities.forEach(function(entity) {
-      if(Bump.hit(entity.components.SpriteComponent.sprite, Game.player.components.SpriteComponent.sprite)) {
-        Game.player.components.MovementComponent.speed += 0.1;
-        entity.scene.removeEntity(entity, 4);
+      for(var i = 0; i < Game.players.length; i++) {
+        if(Bump.hit(entity.components.SpriteComponent.sprite, Game.players[i].components.SpriteComponent.sprite)) {
+          for(var j = 0; j < Game.players.length; j++) {
+            Game.players[j].components.MovementComponent.speed += 0.1;
+          }
+          entity.scene.removeEntity(entity, 4);
+          break;
+        }
       }
     });
   }

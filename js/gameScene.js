@@ -50,7 +50,7 @@ var GameScene = function(args) {
       //generate powerups
       if(Math.random() < 0.3) {
         var powerupSprite = new PIXI.Sprite(PIXI.loader.resources.speedup.texture);
-        powerupSprite.scale.x = 0.6
+        powerupSprite.scale.x = 0.6;
         powerupSprite.scale.y = 0.6;
         powerupSprite.position.x = Math.floor(Math.random() * (width - powerupSprite.width)) + currentX;
         powerupSprite.position.y = Game.renderer.height - height - powerupSprite.height;
@@ -81,14 +81,30 @@ var GameScene = function(args) {
   playerSprite.position.x = Game.renderer.width/3;
   playerSprite.scale.x = 0.2;
   playerSprite.scale.y = 0.2;
-  Game.player = new Systemize.Entity([
+  var player = new Systemize.Entity([
     {type: "SpriteComponent", component: {sprite: playerSprite}},
     {type: "PhysicsComponent", component: {velocity: {x: 0, y: 0}, acceleration: {x: 0, y: 0.35}, friction: 0.95, solid: true, static: false}},
     {type: "CollisionComponent", component: {group: "player", solid: true}},
     {type: "MovementComponent", component: {speed: 0.3}},
     {type: "FollowComponent", component: {distance: 0}}
   ]);
-  scene.addEntity(Game.player, 4);
+  scene.addEntity(player, 4);
+
+
+  playerSprite = new PIXI.Sprite(PIXI.loader.resources.player.texture);
+  playerSprite.position.y = 100;
+  playerSprite.position.x = Game.renderer.width/3 - 75;
+  playerSprite.scale.x = 0.2;
+  playerSprite.scale.y = 0.2;
+  player2 = new Systemize.Entity([
+    {type: "SpriteComponent", component: {sprite: playerSprite}},
+    {type: "PhysicsComponent", component: {velocity: {x: 0, y: 0}, acceleration: {x: 0, y: 0.35}, friction: 0.95, solid: true, static: false}},
+    {type: "CollisionComponent", component: {group: "player", solid: true}},
+    {type: "MovementComponent", component: {speed: 0.3}},
+  ]);
+  scene.addEntity(player2, 4);
+
+  Game.players = [player, player2];
 
   return scene;
 };
