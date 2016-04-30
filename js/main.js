@@ -3,7 +3,6 @@ var Game = new Systemize.Game(1280, 720);
 Bump = new Bump(PIXI);
 
 Game.addAssets([
-  ["player", "assets/player.png"],
   ["bricks", "assets/buildings/textures/dark_brick.png"],
   ["concrete", "assets/concrete.png"],
   ["background0", "assets/background/sky.png"],
@@ -11,7 +10,14 @@ Game.addAssets([
   ["background2", "assets/background/mountain1.png"],
   ["background3", "assets/background/mountain2.png"],
   ["dirt", "assets/buildings/textures/dirt.png"],
-  ["speedup", "assets/powerups/cola.png"]
+  ["speedup", "assets/powerups/cola.png"],
+  ["character0", "assets/character/character0.png"],
+  ["character1", "assets/character/character1.png"],
+  ["character2", "assets/character/character2.png"],
+  ["character3", "assets/character/character3.png"],
+  ["character4", "assets/character/character4.png"],
+  ["door", "assets/buildings/door.png"],
+  ["window", "assets/buildings/window.png"]
 ]);
 
 /*
@@ -180,8 +186,17 @@ Game.addSystem({
     entities.forEach(function(entity) {
       for(var i = 0; i < Game.players.length; i++) {
         if(Bump.hit(entity.components.SpriteComponent.sprite, Game.players[i].components.SpriteComponent.sprite)) {
-          for(var j = 0; j < Game.players.length; j++) {
-            Game.players[j].components.MovementComponent.speed += 0.1;
+          switch(entity.components.PowerupComponent.type) {
+            case "speed":
+              for(var j = 0; j < Game.players.length; j++) {
+                Game.players[j].components.MovementComponent.speed += 0.1;
+              }
+              setTimeout(function() {
+                for(var j = 0; j < Game.players.length; j++) {
+                  Game.players[j].components.MovementComponent.speed -= 0.1;
+                }
+              }, 1000);
+              break;
           }
           entity.scene.removeEntity(entity, 4);
           break;
@@ -196,44 +211,49 @@ Game.addSystem({
   update: function(delta) {
     delta /= 16;
     var entities = Game.entityManager.getEntitiesByComponents(["FollowComponent", "SpriteComponent"]);
+    var forward = entities[0];
     entities.forEach(function(entity) {
-      var sprite = entity.components.SpriteComponent.sprite;
-      var paralax = 0.25;
-      var normal = 4;
-      var distance = entity.components.FollowComponent.distance;
-      entity.scene.layers.forEach(function(scene, index) {
-        entity.scene.layers[index].position.x -= (index) * paralax * distance;
-      });
+      if(entity.components.SpriteComponent.sprite.position.x > forward.components.SpriteComponent.sprite.position.x) {
+        forward = entity;
+      }
+    });
+    var sprite = forward.components.SpriteComponent.sprite;
+    var paralax = 0.25;
+    var normal = 4;
+    var distance = forward.components.FollowComponent.distance;
+    forward.scene.layers.forEach(function(scene, index) {
+      forward.scene.layers[index].position.x -= (index) * paralax * distance;
     });
   }
 });
 
-/*
-//CollisionSystem
+//Animation System
 Game.addSystem({
   update: function(delta) {
-    var entities = Game.entityManager.getEntitiesByComponents(["SpriteComponent", "SolidComponent"]);
+    var entities = Game.entityManager.getEntitiesByComponents(["SpriteComponent", "AnimationComponent"]);
     entities.forEach(function(entity) {
+      var animation = entity.components.AnimationComponent;
       var sprite = entity.components.SpriteComponent.sprite;
-      var collision = entity.components.CollisionComponent;
-      if(collision.static) {
+      if(!animation.playing) {
+        sprite.texture = animation.frames[animation.currentIndex];
         return;
       }
-      entities.forEach(function(other) {
-        if(entity === other) return;
-        var otherSprite = other.components.SpriteComponent.sprite;
-        var otherCollision = other.components.CollisionComponent;
-        //make sure that 2 solid things don't touch
-        var side = Bump.rectangleCollision(sprite, otherSprite, (collision.solid && otherCollision.solid));
-        if(side == "bottom" && entity.components.PhysicsComponent) {
-          entity.components.PhysicsComponent.velocity.y = 0;
+      animation.currentIndex = animation.currentIndex || 0;
+      animation.elapsed = animation.elapsed || 0;
+      //if we need to go to another frame
+      if(animation.elapsed + delta >= animation.framerate) {
+        animation.elapsed = animation.elapsed + delta - animation.framerate;
+        //animation.elapsed = 0;
+        animation.currentIndex++;
+        if(animation.currentIndex >= animation.frames.length) {
+          animation.currentIndex = 0;
         }
-        //add other collision detection here
-      });
+        sprite.texture = animation.frames[animation.currentIndex];
+      }
+      animation.elapsed += delta;
     });
   }
 });
-*/
 
 //MovementSystem
 Game.addSystem({
@@ -250,7 +270,6 @@ Game.addSystem({
       var movement = entity.components.MovementComponent;
       var physics = entity.components.PhysicsComponent;
       var sprite = entity.components.SpriteComponent.sprite;
-      var collidable = Game.entityManager.getEntitiesByComponents(["CollisionComponent", "SpriteComponent"]);
       var stop = true;
       if(Systemize.InputManager.isKeyDown(self.keys.right)) {
         physics.acceleration.x = movement.speed;
@@ -261,24 +280,41 @@ Game.addSystem({
         stop = false;
       }
       if(stop) physics.acceleration.x = 0;
-      if(Systemize.InputManager.isKeyDown(self.keys.space)) {
-        collidable.forEach(function(other) {
-          var otherCollision = other.components.CollisionComponent;
-          var otherSprite = other.components.SpriteComponent.sprite;
-          if(otherCollision.solid) {
-            var left = Bump.hitTestPoint({
-              x: sprite.position.x + 10,
-              y: sprite.position.y + sprite.height + 2
-            }, otherSprite);
-            var right = Bump.hitTestPoint({
-              x: sprite.position.x + sprite.width - 10,
-              y: sprite.position.y + sprite.height + 2
-            }, otherSprite);
-            if(right || left) {
-              physics.velocity.y = -10;
-            }
+
+
+      var grounded = false;
+      var collidable = Game.entityManager.getEntitiesByComponents(["PhysicsComponent", "SpriteComponent"]);
+      collidable.forEach(function(other) {
+        var otherCollision = other.components.CollisionComponent;
+        var otherSprite = other.components.SpriteComponent.sprite;
+        if(otherCollision.solid) {
+          var left = Bump.hitTestPoint({
+            x: sprite.position.x + 10,
+            y: sprite.position.y + sprite.height + 2
+          }, otherSprite);
+          var right = Bump.hitTestPoint({
+            x: sprite.position.x + sprite.width - 10,
+            y: sprite.position.y + sprite.height + 2
+          }, otherSprite);
+          if(left || right) {
+            grounded = true;
+            return;
           }
-        });
+        }
+      });
+      //updating the jumping animation
+      //should probable move this logic to the animation system
+      if(entity.components.AnimationComponent && grounded) {
+        entity.components.AnimationComponent.playing = true;
+      } else {
+        entity.components.AnimationComponent.playing = false;
+        entity.components.AnimationComponent.currentIndex = 0;
+      }
+      //jumping
+      if(Systemize.InputManager.isKeyDown(self.keys.space)) {
+        if(grounded) {
+          physics.velocity.y = -10;
+        }
       }
     });
   }
