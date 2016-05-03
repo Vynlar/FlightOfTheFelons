@@ -135,7 +135,7 @@ var GameScene = function(args) {
       //generate coins
       var count = Math.floor(Math.random() * 3 + 2);
       var spacing = width / count;
-      var vOffset = Math.random() * 100;
+      var vOffset = Math.random() * 170;
       for(k = 0; k < count; k++) {
         sprite = new PIXI.Sprite(PIXI.loader.resources.coin.texture);
         sprite.scale.x = 0.1;
@@ -155,7 +155,7 @@ var GameScene = function(args) {
     }
   };
   generateBuildings({
-    count: 30,
+    count: 50,
     minHeight: 100,
     maxHeight: 350,
     minWidth: 100,
@@ -172,6 +172,7 @@ var GameScene = function(args) {
     var frame = PIXI.loader.resources["character" + i].texture;
     frames.push(frame);
   }
+  Game.players = [];
   for(i = 0; i < 3; i++) {
     var playerSprite = new PIXI.Sprite(frames[0]);
     playerSprite.scale.x = 3;
@@ -187,7 +188,6 @@ var GameScene = function(args) {
       {type: "AnimationComponent", component: {frames: frames, framerate: 70, playing: true}}
     ]);
     scene.addEntity(player, 4);
-    Game.players = Game.players || [];
     Game.players.push(player);
   }
 
@@ -214,8 +214,8 @@ var GameScene = function(args) {
   var fade = new Systemize.Entity([
     {type: "SpriteComponent", component: {sprite: fadeSprite}}
   ]);
+  Game.end = fade;
   scene.addEntity(fade, 4);
 
   return scene;
 };
-

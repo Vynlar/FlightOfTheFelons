@@ -157,27 +157,35 @@ Game.addSystem({
     });
   }
 });
-/*
 
+//End of Level system
 Game.addSystem({
   update: function(delta) {
     Game.players.forEach(function(player) {
-      if(Bump.hit(player.components.SpriteComponent.sprite, Game.end.components.SpriteComponent.sprite)) {
+      if(!Game.end || !Game.players) {
+        //game scene not yet loaded
+        return;
+      }
+      if(player.components.SpriteComponent.sprite.position.x > Game.end.components.SpriteComponent.sprite.position.x + 600) {
+        if(Game.won) return;
+        Game.won = true;
         var count = 0;
         Game.players.forEach(function(other) {
           var x = player.components.SpriteComponent.sprite.position.x;
           var otherx = other.components.SpriteComponent.sprite.position.x;
-          if(x - otherx > Game.renderer.width/2) {
+          if(x - otherx < Game.renderer.width/2) {
             count++;
           }
         });
-        Game.score.components.ScoreComponent.score.multiplier = count;
+        console.log(count);
+        Game.score.components.ScoreComponent.multiplier = count;
+        Game.reloadScene("EndScreenScene");
         Game.setScene("EndScreenScene");
+        return;
       }
     });
   }
 });
-*/
 
 //Animation System
 Game.addSystem({
