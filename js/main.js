@@ -9,130 +9,27 @@ Game.addAssets([
   ["background1", "assets/background/mountain0.png"],
   ["background2", "assets/background/mountain1.png"],
   ["background3", "assets/background/mountain2.png"],
+  ["fade", "assets/background/fade.png"],
   ["dirt", "assets/buildings/textures/dirt.png"],
   ["speedup", "assets/powerups/cola.png"],
+  ["coin", "assets/powerups/coin.png"],
   ["character0", "assets/character/character0.png"],
   ["character1", "assets/character/character1.png"],
   ["character2", "assets/character/character2.png"],
   ["character3", "assets/character/character3.png"],
   ["character4", "assets/character/character4.png"],
   ["door", "assets/buildings/door.png"],
-  ["window", "assets/buildings/window.png"]
+  ["lamp", "assets/buildings/lamp.png"],
+  ["grafitti", "assets/buildings/grafitti.png"],
+  ["window", "assets/buildings/window.png"],
+  ["playButton", "assets/ui/playButton.png"],
+  ["logo", "assets/ui/logo.png"]
 ]);
 
-/*
-Game.addSceneTemplate({
-  id: "GameScene",
-  layerCount: 6,
-  entities: [
-    {
-      layer: 0,
-      entity: function() {
-        var sprite = new PIXI.extras.TilingSprite(PIXI.loader.resources.background0.texture, Game.renderer.width * 10, Game.renderer.height);
-        var background = new Systemize.Entity([
-          {type: "SpriteComponent", component: {sprite: sprite}}
-        ]);
-        return background;
-      }
-    },
-    {
-      layer: 1,
-      entity: function() {
-        var sprite = new PIXI.extras.TilingSprite(PIXI.loader.resources.background1.texture, Game.renderer.width * 10, Game.renderer.height);
-        var background = new Systemize.Entity([
-          {type: "SpriteComponent", component: {sprite: sprite}}
-        ]);
-        return background;
-      }
-    },
-    {
-      layer: 2,
-      entity: function() {
-        var sprite = new PIXI.extras.TilingSprite(PIXI.loader.resources.background2.texture, Game.renderer.width * 10, Game.renderer.height);
-        var background = new Systemize.Entity([
-          {type: "SpriteComponent", component: {sprite: sprite}}
-        ]);
-        return background;
-      }
-    },
-    {
-      layer: 3,
-      entity: function() {
-        var sprite = new PIXI.extras.TilingSprite(PIXI.loader.resources.background3.texture, Game.renderer.width * 10, Game.renderer.height);
-        var background = new Systemize.Entity([
-          {type: "SpriteComponent", component: {sprite: sprite}}
-        ]);
-        return background;
-      }
-    },
-    {
-      layer: 4,
-      entity: function() {
-        var buildings = [];
-        var currentX = 0;
-        var currentY = 200;
-        for(var i = 0; i < 50; i++) {
-          var width = Math.floor(Math.random() * 200 + 100);
-          var dHeight = Math.floor(Math.random() * 200 - 100);
-          var height = currentY + dHeight;
-          if(height <= 100 || height >= Game.renderer.height - 250) {
-            height -= dHeight * 2;
-          }
-          currentY = height;
-
-          var texture;
-          if(Math.random() < 0.5) texture = PIXI.loader.resources.bricks.texture;
-          else texture = PIXI.loader.resources.concrete.texture;
-          var spriteContainer = new PIXI.Container();
-          var sprite = new PIXI.extras.TilingSprite(texture, width, height);
-          sprite.position.x = currentX;
-          sprite.position.y = Game.renderer.height - height;
-          spriteContainer.addChild(sprite);
-
-          //generate dirt
-          var dirt = new PIXI.extras.TilingSprite(PIXI.loader.resources.dirt.texture, 400, width);
-          dirt.position.x = currentX;
-          dirt.position.y = Game.renderer.height;
-          spriteContainer.addChild(dirt);
-
-          var building = new Systemize.Entity([
-            {type: "SpriteComponent", component: {sprite: spriteContainer}},
-            {type: "CollisionComponent", component: {group: "solid", solid: true, static: true}},
-            {type: "PhysicsComponent", component: {velocity: {x: 0, y: 0}, acceleration: {x: 0, y: 0}, friction: 0.95, solid: true, static: true}}
-          ]);
-          buildings.push(building);
-          currentX += width;
-          currentX += Math.floor(Math.random() * 30);
-
-
-        }
-        return buildings;
-      }
-    },
-    {
-      layer: 4,
-      entity: function() {
-        var sprite = new PIXI.Sprite(PIXI.loader.resources.player.texture);
-        sprite.position.y = 100;
-        sprite.position.x = Game.renderer.width/3;
-        sprite.scale.x = 0.2;
-        sprite.scale.y = 0.2;
-        var player = new Systemize.Entity([
-          {type: "SpriteComponent", component: {sprite: sprite}},
-          {type: "PhysicsComponent", component: {velocity: {x: 0, y: 0}, acceleration: {x: 0, y: 0.35}, friction: 0.95, solid: true, static: false}},
-          {type: "CollisionComponent", component: {group: "player", solid: true}},
-          {type: "MovementComponent", component: {speed: 0.3}},
-          {type: "FollowComponent", component: {distance: 0}}
-        ]);
-
-        return player;
-      }
-    }
-  ]
-});
-*/
-
+//setup scenes
+Game.addScene("MainMenuScene", MainMenuScene);
 Game.addScene("GameScene", GameScene);
+Game.addScene("EndScreenScene", EndScreenScene);
 
 //PhysicsSystem
 Game.addSystem({
@@ -145,9 +42,8 @@ Game.addSystem({
       if(physics.static) return;
       //add acceleration to velocity
       physics.velocity.x += physics.acceleration.x;
-      physics.velocity.y += physics.acceleration.y;
+      physics.velocity.y += physics.acceleration.y * delta;
       //clamp velocity
-      //physics.velocity.x = Math.min(physics.velocity.x, 5);
       physics.velocity.y = Math.min(physics.velocity.y, 15);
       //account for friction
       physics.velocity.x *= physics.friction;
@@ -169,11 +65,26 @@ Game.addSystem({
         }
         if(entity.components.FollowComponent) {
           if(side == "left" || side == "right") {
-            physics.velocity.x = 0;
+            //physics.velocity.x = 0;
             entity.components.FollowComponent.distance = 0;
           }
         }
       });
+    });
+  }
+});
+
+//Score System
+Game.addSystem({
+  update: function(delta) {
+    delta /= 16;
+    var entities = Game.entityManager.getEntitiesByComponents(["ScoreComponent", "SpriteComponent"]);
+    entities.forEach(function(entity) {
+      var sprite = entity.components.SpriteComponent.sprite;
+      if(Game.forwardPlayer) {
+        sprite.position.x = Game.forwardPlayer.components.SpriteComponent.sprite.position.x;
+        sprite.position.y = Game.forwardPlayer.components.SpriteComponent.sprite.position.y - 50;
+      }
     });
   }
 });
@@ -189,13 +100,18 @@ Game.addSystem({
           switch(entity.components.PowerupComponent.type) {
             case "speed":
               for(var j = 0; j < Game.players.length; j++) {
-                Game.players[j].components.MovementComponent.speed += 0.1;
+                Game.players[j].components.MovementComponent.speed += 0.05;
               }
-              setTimeout(function() {
+/*              setTimeout(function() {
                 for(var j = 0; j < Game.players.length; j++) {
                   Game.players[j].components.MovementComponent.speed -= 0.1;
                 }
-              }, 1000);
+              }, 5000);
+              */
+              break;
+            case "score":
+              Game.score.components.ScoreComponent.score++;
+              Game.score.components.SpriteComponent.sprite.text = Game.score.components.ScoreComponent.score;
               break;
           }
           entity.scene.removeEntity(entity, 4);
@@ -209,20 +125,35 @@ Game.addSystem({
 //camera system
 Game.addSystem({
   update: function(delta) {
-    delta /= 16;
+    //delta /= 16;
     var entities = Game.entityManager.getEntitiesByComponents(["FollowComponent", "SpriteComponent"]);
+    if(entities.length <= 0) {
+      return;
+    }
     var forward = entities[0];
     entities.forEach(function(entity) {
       if(entity.components.SpriteComponent.sprite.position.x > forward.components.SpriteComponent.sprite.position.x) {
         forward = entity;
       }
     });
+    Game.forwardPlayer = forward;
     var sprite = forward.components.SpriteComponent.sprite;
     var paralax = 0.25;
-    var normal = 4;
     var distance = forward.components.FollowComponent.distance;
     forward.scene.layers.forEach(function(scene, index) {
       forward.scene.layers[index].position.x -= (index) * paralax * distance;
+    });
+  }
+});
+
+//menu scroll system
+Game.addSystem({
+  update: function(delta) {
+    var entities = Game.entityManager.getEntitiesByComponents(["SpriteComponent", "ScrollComponent"]);
+    entities.forEach(function(entity) {
+      var sprite = entity.components.SpriteComponent.sprite;
+      var paralax = 0.25;
+      sprite.tilePosition.x -= (entity.components.ScrollComponent.layer) * paralax;
     });
   }
 });
@@ -270,17 +201,7 @@ Game.addSystem({
       var movement = entity.components.MovementComponent;
       var physics = entity.components.PhysicsComponent;
       var sprite = entity.components.SpriteComponent.sprite;
-      var stop = true;
-      if(Systemize.InputManager.isKeyDown(self.keys.right)) {
-        physics.acceleration.x = movement.speed;
-        stop = false;
-      }
-      if(Systemize.InputManager.isKeyDown(self.keys.left)) {
-        physics.acceleration.x = -movement.speed;
-        stop = false;
-      }
-      if(stop) physics.acceleration.x = 0;
-
+      physics.acceleration.x = movement.speed;
 
       var grounded = false;
       var collidable = Game.entityManager.getEntitiesByComponents(["PhysicsComponent", "SpriteComponent"]);
@@ -321,3 +242,5 @@ Game.addSystem({
 });
 
 Game.start();
+Game.score = {score: 4};
+Game.setScene("EndScreenScene");
