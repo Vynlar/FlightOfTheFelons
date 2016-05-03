@@ -157,6 +157,27 @@ Game.addSystem({
     });
   }
 });
+/*
+
+Game.addSystem({
+  update: function(delta) {
+    Game.players.forEach(function(player) {
+      if(Bump.hit(player.components.SpriteComponent.sprite, Game.end.components.SpriteComponent.sprite)) {
+        var count = 0;
+        Game.players.forEach(function(other) {
+          var x = player.components.SpriteComponent.sprite.position.x;
+          var otherx = other.components.SpriteComponent.sprite.position.x;
+          if(x - otherx > Game.renderer.width/2) {
+            count++;
+          }
+        });
+        Game.score.components.ScoreComponent.score.multiplier = count;
+        Game.setScene("EndScreenScene");
+      }
+    });
+  }
+});
+*/
 
 //Animation System
 Game.addSystem({
@@ -242,5 +263,3 @@ Game.addSystem({
 });
 
 Game.start();
-Game.score = {score: 4};
-Game.setScene("EndScreenScene");

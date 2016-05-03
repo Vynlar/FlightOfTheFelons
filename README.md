@@ -1,7 +1,6 @@
 # Flight Of The Felons
 
 ### Controls
-Left and Right arrow keys to move
 Space to jump
 
 ### Power Ups
