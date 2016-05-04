@@ -43,7 +43,6 @@ var MainMenuScene = function(args) {
       {type: "SpriteComponent", component: {sprite: sprite}}
     ]);
     scene.addEntity(playButton, 4);
-
   };
   createPlayButton();
 

@@ -102,19 +102,23 @@ Game.addSystem({
               for(var j = 0; j < Game.players.length; j++) {
                 Game.players[j].components.MovementComponent.speed += 0.05;
               }
-/*              setTimeout(function() {
-                for(var j = 0; j < Game.players.length; j++) {
-                  Game.players[j].components.MovementComponent.speed -= 0.1;
-                }
-              }, 5000);
-              */
+              entity.scene.removeEntity(entity, 4);
               break;
             case "score":
               Game.score.components.ScoreComponent.score++;
               Game.score.components.SpriteComponent.sprite.text = Game.score.components.ScoreComponent.score;
+              entity.scene.removeEntity(entity, 4);
+              break;
+            case "kill":
+              Game.players[i].scene.removeEntity(Game.players[i], 4);
+              Game.players.splice(i, 1);
+              if(Game.players.length <= 0) {
+                Game.score.components.ScoreComponent.multiplier = 0;
+                Game.reloadScene("EndScreenScene");
+                Game.setScene("EndScreenScene");
+              }
               break;
           }
-          entity.scene.removeEntity(entity, 4);
           break;
         }
       }

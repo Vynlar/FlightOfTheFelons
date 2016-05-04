@@ -151,7 +151,24 @@ var GameScene = function(args) {
 
       //update currentX
       currentX += width;
-      currentX += Math.floor(Math.random() * 30);
+      if(Math.random() < options.gapChance && i > 8) {
+        // add in a gap
+        var gapWidth = Math.floor(Math.random() * (options.maxGap - options.minGap) + options.minGap);
+        //generate the character deleters
+        var spikeSprite = new PIXI.Sprite(PIXI.loader.resources.speedup.texture);
+        spikeSprite.width = gapWidth;
+        spikeSprite.height = 50;
+        spikeSprite.position.x = currentX;
+        spikeSprite.position.y = Game.renderer.height + 100;
+        var spike = new Systemize.Entity([
+          {type: "SpriteComponent", component: {sprite: spikeSprite}},
+          {type: "PowerupComponent", component: {type: "kill"}}
+        ]);
+        scene.addEntity(spike, 4);
+        currentX += gapWidth;
+      } else {
+        currentX += Math.floor(Math.random() * 30);
+      }
     }
   };
   generateBuildings({
@@ -160,6 +177,9 @@ var GameScene = function(args) {
     maxHeight: 350,
     minWidth: 100,
     maxWidth: 400,
+    gapChance: 0.2,
+    minGap: 70,
+    maxGap: 230,
     deltaHeight: 100,
     startHeight: 200,
     minWindows: 2,
@@ -183,7 +203,7 @@ var GameScene = function(args) {
       {type: "SpriteComponent", component: {sprite: playerSprite}},
       {type: "PhysicsComponent", component: {velocity: {x: 0, y: 0}, acceleration: {x: 0, y: 0.35}, friction: 0.95, solid: true, static: false}},
       {type: "CollisionComponent", component: {group: "player", solid: true}},
-      {type: "MovementComponent", component: {speed: 0.15}},
+      {type: "MovementComponent", component: {speed: 0.2}},
       {type: "FollowComponent", component: {distance: 0}},
       {type: "AnimationComponent", component: {frames: frames, framerate: 70, playing: true}}
     ]);
