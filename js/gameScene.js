@@ -157,7 +157,7 @@ var GameScene = function(args) {
         //generate the character deleters
         var spikeSprite = new PIXI.Sprite(PIXI.loader.resources.speedup.texture);
         spikeSprite.width = gapWidth;
-        spikeSprite.height = 50;
+        spikeSprite.height = 300;
         spikeSprite.position.x = currentX;
         spikeSprite.position.y = Game.renderer.height + 100;
         var spike = new Systemize.Entity([
